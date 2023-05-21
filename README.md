@@ -1,4 +1,4 @@
-# CS 454 - Project 2
+# CS 454 - Final Project
 
 <sub>Zach Gassner, Justin Blechel</sub>
 
