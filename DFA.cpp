@@ -5,11 +5,9 @@ DFA::DFA(std::vector<int>& q,
     std::vector<int> f,
     std::vector<std::vector<int>> _delta) {
     Q = std::move(q),
-    std::copy(
-            sigma.begin(), sigma.end(),
-            std::inserter( Sigma, Sigma.begin() ) );
+    Sigma = sigma,
     F = std::move(f),
-            delta = std::move(_delta);
+    delta = std::move(_delta);
 }
 
 DFA::DFA(const std::string& fileName) {
@@ -37,22 +35,18 @@ DFA::DFA(const std::string& fileName) {
     std::string line;
     std::getline(file, line);
 
-    for (char ch : line) {
-        if (ch != ' ') {
-            F.push_back(ch - 48);
-        }
-    }
+    for (char ch : line)
+        if (ch != ' ') F.push_back(ch - 48);
+
 
     for (auto &state : delta) {
-        for (auto &nextState : state) {
+        for (auto &nextState : state)
             file >> nextState;
-        }
     }
 }
 
 bool DFA::isEquivalent(int s1, int s2, const std::vector<int>& partition) {
     for (int transition = 0; transition < Sigma.size(); transition++) {
-
         int delta_s1 = delta[s1][transition];
         int delta_s2 = delta[s2][transition];
         if (partition[delta_s1] != partition[delta_s2])
@@ -79,7 +73,7 @@ void DFA::minimize() {
     // are the preimages of the current partition under
     // the transition functions for each of the input symbols.
 
-    for(;;) { // repeat until partition is the same as newPartition:
+    for(;;) { // repeat until partition is the same as newPartition
         std::vector<int> newPartition(Q.size(), -1);
         int s1 = 0;
         while (s1 < Q.size()) {
@@ -90,7 +84,7 @@ void DFA::minimize() {
                 // two states are indistinguishable if they are equivalent
                 else if (partition[s1] == partition[s2] && isEquivalent(s1, s2, partition))
                     newPartition[s2] = s1;                // replace s1 & s2
-                else if (next == Q.size()) next = s2;  // keep first replaced node
+                else if (next == Q.size()) next = s2;     // keep first replaced node
             }
             s1 = next;
         }
@@ -125,23 +119,24 @@ void DFA::constructMinimizedDFA(std::vector<int> partition) {
 
     // new accepting num_states
     std::set<int> newAcceptingStates;
-    for (const auto & state : F) {
+    for (const auto & state : F)
         newAcceptingStates.insert(partition[state]);
-    }
+
     Q.clear();
     std::copy(newStates.begin(), newStates.end(),
-              std::inserter( Q, Q.begin() ) );
+              std::inserter( Q, Q.begin()));
 
     F.clear();
     std::copy(newAcceptingStates.begin(), newAcceptingStates.end(),
-              std::inserter( F, F.begin() ) );
+              std::inserter( F, F.begin()));
+
     delta = newDelta;
 
     for (int state = 0; state < Q.size(); ++state) {
         if (Q[state] != state) {
-            for (int & accepting_state : F) {
-                if (accepting_state == Q[state]) accepting_state = state;
-            }
+            for (int & accepting_state : F)
+                if (accepting_state == Q[state])
+                    accepting_state = state;
         }
     }
 }
@@ -150,7 +145,7 @@ void DFA::constructMinimizedDFA(std::vector<int> partition) {
  * Function to remove unreachable states from a DFA
  * Unreachable states are the states that are not reachable
  * from the initial state of the DFA, for any input string.
- * These states can be removed. Below is the Pseudocode
+ * These states can be removed.
  */
 void DFA::removeUnreachableStates() {
     std::set<int> reachable_states = {0};
