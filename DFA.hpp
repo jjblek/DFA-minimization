@@ -17,11 +17,11 @@ public:
     explicit DFA(const std::string& fileName);
     DFA(std::vector<int>& Q, const std::set<char>& Sigma, std::vector<int> f, std::vector<std::vector<int>> _delta);
     void removeUnreachableStates();
+    void minimize();
     bool isEquivalent(int i, int j, const std::vector<int>& m_prime);
-    void Minimize();
+    void constructMinimizedDFA(std::vector<int> partition);
     void printToConsole(int index);
     void printToFile(const std::string& fileName);
-
 private:
     std::vector<int> Q;                     // states
     std::set<char> Sigma;                   // alphabet

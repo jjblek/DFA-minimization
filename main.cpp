@@ -37,10 +37,11 @@
 int main(int argc, char* argv[]) {
 
     for (int i = 1; i < argc; i++) {
+        std::cout << "======================\n";
         std::string fileName = argv[i];
         DFA dfa(fileName);
         dfa.removeUnreachableStates();
-        dfa.Minimize();
+        dfa.minimize();
         fileName.insert(fileName.find('.'), "-minimized");
         std::cout << "MINIMIZED ";
         dfa.printToConsole(i);
@@ -49,6 +50,6 @@ int main(int argc, char* argv[]) {
 
         }
     }
-
+    std::cout << "======================";
     return 0;
 }

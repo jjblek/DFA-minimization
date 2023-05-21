@@ -1,17 +1,15 @@
 #include "DFA.hpp"
 
 DFA::DFA(std::vector<int>& q,
-         const std::set<char>& sigma,
-         std::vector<int> f,
-         std::vector<std::vector<int>> _delta) {
+    const std::set<char>& sigma,
+    std::vector<int> f,
+    std::vector<std::vector<int>> _delta) {
     Q = std::move(q),
-            std::copy(
-                    sigma.begin(), sigma.end(),
-                    std::inserter( Sigma, Sigma.begin() ) );
-
+    std::copy(
+            sigma.begin(), sigma.end(),
+            std::inserter( Sigma, Sigma.begin() ) );
     F = std::move(f),
             delta = std::move(_delta);
-
 }
 
 DFA::DFA(const std::string& fileName) {
@@ -52,58 +50,63 @@ DFA::DFA(const std::string& fileName) {
     }
 }
 
-bool DFA::isEquivalent(int i, int j, const std::vector<int>& m_prime) {
+bool DFA::isEquivalent(int s1, int s2, const std::vector<int>& partition) {
     for (int transition_index = 0; transition_index < Sigma.size(); transition_index++) {
-        int destination_i = delta[i][transition_index];
-        int destination_j = delta[j][transition_index];
-        if (m_prime[destination_i] != m_prime[destination_j])
+
+        int delta_s1 = delta[s1][transition_index];
+        int delta_s2 = delta[s2][transition_index];
+        if (partition[delta_s1] != partition[delta_s2])
             return false;
     }
     return true;
 }
 
-void DFA::Minimize() {
-    const int states = int(Q.size());
+/**
+ * Function to minimize a DFA
+ * Moore’s Algorithm is used for DFA Minimization by compressing equivalent states.
+ * We compare every pair of states to check for equivalence until no new equivalent states are found.
+ */
+void DFA::minimize() {
+    int num_states = int(Q.size());
 
-    std::vector<int> partition(states, -1);
+    std::vector<int> partition(num_states, -1);
 
-    // start off by separating the accepting from the rejecting states,
-    int rejecting = -1;
-
+    // start off by separating the accepting from the rejecting states
     for (auto &i: F) partition[i] = *F.begin();
 
-    for (int i = 0; i < states; i++) {
-        if (partition[i] < 0) {
-            if (rejecting < 0) rejecting = i;
-            partition[i] = rejecting;
-        }
-    }
     // At each step, replace the current partition
     // with the coarsest common refinement of s + 1 partitions,
     // one of which is the current one and the rest of which
     // are the preimages of the current partition under
     // the transition functions for each of the input symbols.
     while (true) {
-        std::vector<int> preimage(states, -1);
-        int s = 0;
-        while (s < states) {
-            preimage[s] = s;
-            int next = states;
-            // replace the current partition with the coarsest common refinement of s + 1 partitions
-            for (int i = s + 1; i < states; i++) {
-                if (preimage[i] >= 0) continue;  // skip if i is already replaced
-                if (partition[s] == partition[i] && isEquivalent(s, i, partition)) {
-                    preimage[i] = s;   // merge s & i
-                }
-                else if (next == states) next = i;  // keep the first unmerged node
+        std::vector<int> preimage(num_states, -1);
+        int s1 = 0;
+        while (s1 < num_states) {
+            preimage[s1] = s1;
+            int next = num_states;
+            for (int s2 = s1 + 1; s2 < num_states; s2++) {
+                if (preimage[s2] > -1) continue;     // skip, already replaced
+                // two states are indistinguishable if they are equivalent
+                if (partition[s1] == partition[s2] && isEquivalent(s1, s2, partition))
+                    preimage[s2] = s1;                // replace s1 & s2
+                else if (next == num_states) next = s2;  // keep first replaced node
             }
-            s = next;
+            s1 = next;
         }
-        // terminate when replacement does not change the current partition
-        if (partition == preimage) break;
-        partition = preimage;
-    }
 
+        if (partition != preimage) partition = preimage;
+        else break; // terminate when replacement does not change current partition
+
+    }
+    constructMinimizedDFA(partition);
+}
+
+/**
+ * Function to construct a minimized DFA given a partition
+ * @param partition
+ */
+void DFA::constructMinimizedDFA(std::vector<int> partition) {
     // copy minimization to new set
     std::set<int> newStates(partition.begin(), partition.end());
 
@@ -120,15 +123,14 @@ void DFA::Minimize() {
         }
     }
 
-    // new accepting states
+    // new accepting num_states
     std::set<int> newAcceptingStates;
     for (const auto & state : F) {
         newAcceptingStates.insert(partition[state]);
     }
     Q.clear();
-    std::copy(
-            newStates.begin(), newStates.end(),
-            std::inserter( Q, Q.begin() ) );
+    std::copy(newStates.begin(), newStates.end(),
+              std::inserter( Q, Q.begin() ) );
 
     F.clear();
     std::copy(newAcceptingStates.begin(), newAcceptingStates.end(),
@@ -144,7 +146,12 @@ void DFA::Minimize() {
     }
 }
 
-// Function to remove unreachable states
+/**
+ * Function to remove unreachable states from a DFA
+ * Unreachable states are the states that are not reachable
+ * from the initial state of the DFA, for any input string.
+ * These states can be removed. Below is the Pseudocode
+ */
 void DFA::removeUnreachableStates() {
     std::set<int> reachable_states = {0};
     std::set<int> new_states = {0};
@@ -230,19 +237,18 @@ void DFA::printToFile(const std::string& fileName) {
  * @param name oif the DFA
  */
 void DFA::printToConsole(int index) {
-    std::cout << "DFA " << index << ": " << std::endl;
-    std::cout << Q.size() << '\n' << Sigma.size() << '\n';
-
+    std::cout << "DFA " << index << std::endl;
+    std::cout << "Total states  -  " << Q.size() << '\n' << "Alphabet Size -  " << Sigma.size() << '\n';
+    std::cout << "Final States  -  ";
     for (const auto &state : F) {
         std::cout << state << ' ';
     }
     std::cout << '\n';
-
-    for (const auto &state : delta) {
-        for (const auto & nextState : state) {
-            std::cout << nextState << ' ';
+    for (int state = 0; state < delta.size(); ++state) {
+        std::cout << "Transition " << state << "  -  ";
+        for (int transition : delta[state]) {
+            std::cout << transition << ' ';
         }
         std::cout << '\n';
     }
-    std::cout << '\n';
 }
