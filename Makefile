@@ -3,7 +3,7 @@ FLAGS=-std=c++17
 COMPILE=$(COMPILER) $(FLAGS)
 RM=rm -f
 
-EXE=DFA.x
+EXE=minimize
 
 OBJS=main.o DFA.o
 
