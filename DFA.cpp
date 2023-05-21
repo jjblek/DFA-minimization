@@ -51,10 +51,10 @@ DFA::DFA(const std::string& fileName) {
 }
 
 bool DFA::isEquivalent(int s1, int s2, const std::vector<int>& partition) {
-    for (int transition_index = 0; transition_index < Sigma.size(); transition_index++) {
+    for (int transition = 0; transition < Sigma.size(); transition++) {
 
-        int delta_s1 = delta[s1][transition_index];
-        int delta_s2 = delta[s2][transition_index];
+        int delta_s1 = delta[s1][transition];
+        int delta_s2 = delta[s2][transition];
         if (partition[delta_s1] != partition[delta_s2])
             return false;
     }
@@ -67,11 +67,10 @@ bool DFA::isEquivalent(int s1, int s2, const std::vector<int>& partition) {
  * We compare every pair of states to check for equivalence until no new equivalent states are found.
  */
 void DFA::minimize() {
-    int num_states = int(Q.size());
 
-    std::vector<int> partition(num_states, -1);
+    // initialize a partition
+    std::vector<int> partition(Q.size(), -1);
 
-    // start off by separating the accepting from the rejecting states
     for (auto &i: F) partition[i] = *F.begin();
 
     // At each step, replace the current partition
@@ -79,23 +78,24 @@ void DFA::minimize() {
     // one of which is the current one and the rest of which
     // are the preimages of the current partition under
     // the transition functions for each of the input symbols.
-    while (true) {
-        std::vector<int> preimage(num_states, -1);
+
+    for(;;) { // repeat until partition is the same as newPartition:
+        std::vector<int> newPartition(Q.size(), -1);
         int s1 = 0;
-        while (s1 < num_states) {
-            preimage[s1] = s1;
-            int next = num_states;
-            for (int s2 = s1 + 1; s2 < num_states; s2++) {
-                if (preimage[s2] > -1) continue;     // skip, already replaced
+        while (s1 < Q.size()) {
+            newPartition[s1] = s1;
+            int next = int(Q.size());
+            for (int s2 = s1 + 1; s2 < Q.size(); s2++) {
+                if (newPartition[s2] != -1) continue;     // skip, already replaced
                 // two states are indistinguishable if they are equivalent
-                if (partition[s1] == partition[s2] && isEquivalent(s1, s2, partition))
-                    preimage[s2] = s1;                // replace s1 & s2
-                else if (next == num_states) next = s2;  // keep first replaced node
+                else if (partition[s1] == partition[s2] && isEquivalent(s1, s2, partition))
+                    newPartition[s2] = s1;                // replace s1 & s2
+                else if (next == Q.size()) next = s2;  // keep first replaced node
             }
             s1 = next;
         }
 
-        if (partition != preimage) partition = preimage;
+        if (partition != newPartition) partition = newPartition;
         else break; // terminate when replacement does not change current partition
 
     }
@@ -103,8 +103,8 @@ void DFA::minimize() {
 }
 
 /**
- * Function to construct a minimized DFA given a partition
- * @param partition
+ * Helper function to construct a new DFA using a refined partition
+ * @param partition - refined partition
  */
 void DFA::constructMinimizedDFA(std::vector<int> partition) {
     // copy minimization to new set
