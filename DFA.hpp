@@ -32,7 +32,6 @@ private:
     // PRIVATE METHODS
     void removeUnreachableStates();
     bool isEquivalent(int s1, int s2, const std::vector<int>& partition);
-    void constructMinimizedDFA(std::vector<int> partition);
 
     // PRIVATE DATA
     std::vector<int> Q;                     // states

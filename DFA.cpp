@@ -125,7 +125,45 @@ void DFA::minimize() {
     }
 
     // Step 3: Construct the minimized DFA using the final partition
-    constructMinimizedDFA(partition);
+    // Copy minimization to new set
+    std::set<int> newStates(partition.begin(), partition.end());
+
+    // Initialize new delta function
+    std::vector<std::vector<int> > newDelta(newStates.size(), std::vector<int>(Sigma.size(), -1));
+    for (int i = 0; i < partition.size(); i++) {
+        // Rename state if needed
+        int state = std::distance(newStates.begin(), newStates.find(partition[i]));
+        for (int j = 0; j < Sigma.size(); j++) {
+            // Rename next state
+            int nextState = std::distance(newStates.begin(), newStates.find(partition[delta[i][j]]));
+
+            newDelta[state][j] = nextState;
+        }
+    }
+    // New states
+    Q.clear();
+    std::copy(newStates.begin(), newStates.end(),
+              std::inserter( Q, Q.begin()));
+
+    // New accepting states
+    std::set<int> newAcceptingStates;
+    for (const auto & state : F)
+        newAcceptingStates.insert(partition[state]);
+    F.clear();
+    std::copy(newAcceptingStates.begin(), newAcceptingStates.end(),
+              std::inserter( F, F.begin()));
+
+    // Copy new delta
+    delta = newDelta;
+
+    // Reorder states
+    for (int state = 0; state < Q.size(); ++state) {
+        if (Q[state] != state) {
+            for (int & accepting_state : F)
+                if (accepting_state == Q[state])
+                    accepting_state = state;
+        }
+    }
 }
 
 
@@ -220,53 +258,6 @@ bool DFA::isEquivalent(int s1, int s2, const std::vector<int>& partition) {
     return true;
 }
 
-
-
-/**
- * Helper function to construct a minimized DFA object.
- * @param partition - minimized partition
- */
-void DFA::constructMinimizedDFA(std::vector<int> partition) {
-    // Copy minimization to new set
-    std::set<int> newStates(partition.begin(), partition.end());
-
-    // Initialize new delta function
-    std::vector<std::vector<int> > newDelta(newStates.size(), std::vector<int>(Sigma.size(), -1));
-    for (int i = 0; i < partition.size(); i++) {
-        // Rename state if needed
-        int state = std::distance(newStates.begin(), newStates.find(partition[i]));
-        for (int j = 0; j < Sigma.size(); j++) {
-            // Rename next state
-            int nextState = std::distance(newStates.begin(), newStates.find(partition[delta[i][j]]));
-
-            newDelta[state][j] = nextState;
-        }
-    }
-    // New states
-    Q.clear();
-    std::copy(newStates.begin(), newStates.end(),
-              std::inserter( Q, Q.begin()));
-
-    // New accepting states
-    std::set<int> newAcceptingStates;
-    for (const auto & state : F)
-        newAcceptingStates.insert(partition[state]);
-    F.clear();
-    std::copy(newAcceptingStates.begin(), newAcceptingStates.end(),
-              std::inserter( F, F.begin()));
-
-    // Copy new delta
-    delta = newDelta;
-
-    // Change state names
-    for (int state = 0; state < Q.size(); ++state) {
-        if (Q[state] != state) {
-            for (int & accepting_state : F)
-                if (accepting_state == Q[state])
-                    accepting_state = state;
-        }
-    }
-}
 
 
 
