@@ -21,8 +21,7 @@ We must detect the states whose presence or absence in the DFA does not affect t
 These states can be eliminated from the DFA.
 
 The program consists of a singular class 'DFA' used to represent a deterministic finite automata. 
-A DFA object is initialized with a text file that is passed to the main procedure as a program argument.
-The class includes a method DFA::Minimize() which is used to minimize an input DFA.
+A DFA object is initialized directly or with a text file and includes a public method to minimize itself. 
 
 
 ## Getting Started
@@ -52,13 +51,13 @@ should be entered into a .txt file as such:
 ```
 ### Execute the program
 Change to the working directory and make the program. Execute the program with a text file (representing a DFA) as the program argument. More than one DFA can be passed as program arguments.
-#### 1 DFA
+#### With a single .txt file
 ```
 cd <working directory>
 make
 ./minimize dfa.txt
 ```
-#### 2 DFAs
+#### With multiple .txt files
 ```
 cd <working directory>
 make
