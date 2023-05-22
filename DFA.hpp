@@ -7,22 +7,34 @@
 
 #include <vector>
 #include <set>
-#include <cassert>
 #include <iostream>
 #include <limits>
 #include <fstream>
 
 class DFA {
 public:
+    // FILE CONSTRUCTION
     explicit DFA(const std::string& fileName);
-    DFA(std::vector<int>& Q, const std::set<char>& Sigma, std::vector<int> f, std::vector<std::vector<int>> _delta);
-    void removeUnreachableStates();
+
+    // DIRECT CONSTRUCTION
+    DFA(std::vector<int>& q,
+        const std::set<char>& sigma,
+        std::vector<int> f,
+        std::vector<std::vector<int>> _delta
+    );
+
+    // PUBLIC METHODS
     void minimize();
-    bool isEquivalent(int i, int j, const std::vector<int>& m_prime);
-    void constructMinimizedDFA(std::vector<int> partition);
     void printToConsole(int index);
     void printToFile(const std::string& fileName);
+
 private:
+    // PRIVATE METHODS
+    void removeUnreachableStates();
+    bool isEquivalent(int s1, int s2, const std::vector<int>& partition);
+    void constructMinimizedDFA(std::vector<int> partition);
+
+    // PRIVATE DATA
     std::vector<int> Q;                     // states
     std::set<char> Sigma;                   // alphabet
     std::vector<int> F;                     // final states
