@@ -1,4 +1,4 @@
-# CS 454 - Final Project
+# DFA Minimization - CS 454
 
 <sub>Zach Gassner, Justin Blechel</sub>
 
